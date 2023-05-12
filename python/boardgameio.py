@@ -56,33 +56,33 @@ class Namespace(io.BaseNamespace):
         game_id = args[0]
         state = args[1]
         state_id = state['_stateID']
-        ctx = state['ctx']
-
         # is it my game and my turn to play?
-        if game_id == self.bot.game_id:
-            if not self.previous_state_id or state_id >= self.previous_state_id:
+        if game_id == self.bot.game_id and (
+            not self.previous_state_id or state_id >= self.previous_state_id
+        ):
+            self.previous_state_id = state_id
+            self.log.debug('state = %s', str(state))
+            G = state['G']
 
-                self.previous_state_id = state_id
-                self.log.debug('state = %s', str(state))
-                G = state['G']
+            ctx = state['ctx']
 
-                if 'gameover' in ctx:
-                    # game over
-                    self.bot.gameover(G, ctx)
+            if 'gameover' in ctx:
+                # game over
+                self.bot.gameover(G, ctx)
 
-                elif self.bot.player_id in ctx['actionPlayers']:
-                    self.log.info('phase is %s', ctx['phase'])
-                    if not self.actions:
-                        # plan next actions
-                        self.actions = self.bot.think(G, ctx)
-                        if not isinstance(self.actions, list):
-                            self.actions = [self.actions]
-                    if self.actions:
-                        # pop next action
-                        action = self.actions.pop(0)
-                        self.log.info('sent action: %s', action['payload'])
-                        self.emit('update', action, state_id, game_id,
-                                  self.bot.player_id)
+            elif self.bot.player_id in ctx['actionPlayers']:
+                self.log.info('phase is %s', ctx['phase'])
+                if not self.actions:
+                    # plan next actions
+                    self.actions = self.bot.think(G, ctx)
+                    if not isinstance(self.actions, list):
+                        self.actions = [self.actions]
+                if self.actions:
+                    # pop next action
+                    action = self.actions.pop(0)
+                    self.log.info('sent action: %s', action['payload'])
+                    self.emit('update', action, state_id, game_id,
+                              self.bot.player_id)
 
 
 class Bot(object):
@@ -102,7 +102,7 @@ class Bot(object):
                 'player_id'  : '1',
                 'credentials': 'default',
                 'num_players': 2}
-        opts.update(options or {})
+        opts |= (options or {})
         self.game_id = opts['game_name'] + ':' + opts['game_id']
         self.player_id = opts['player_id']
         self.credentials = opts['credentials']

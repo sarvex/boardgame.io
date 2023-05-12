@@ -41,7 +41,7 @@ class TicTacToeBot(Bot):
         cells = G['cells']
         # choose a random empty cell
         idx = -1
-        while True and None in cells:
+        while None in cells:
             idx = random.randint(0, len(cells)-1)
             if not cells[idx]:
                 break
